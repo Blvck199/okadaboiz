@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FC26 3-5-2 Tactics Builder</title>
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#111a2e; --ink:#e8eefc; --muted:#a9b6d6;
+      --accent:#5aa7ff; --good:#3ddc97; --warn:#ffcc66;
+      --pitch:#0f3d2e; --lines:rgba(255,255,255,.22);
+      --card:#0e162a;
+    }
+    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;}
+    body{margin:0;background:linear-gradient(180deg,#070b14 0%, #0b1220 100%);color:var(--ink);}
+    header{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;gap:12px;align-items:center;justify-content:space-between}
+    header h1{font-size:16px;margin:0;letter-spacing:.4px;font-weight:650}
+    header .pill{font-size:12px;color:var(--muted);border:1px solid rgba(255,255,255,.12);padding:6px 10px;border-radius:999px}
+    main{display:grid;grid-template-columns: 420px 1fr;gap:14px;padding:14px;max-width:1280px;margin:0 auto}
+    @media (max-width: 980px){ main{grid-template-columns:1fr} }
+    .panel{background:rgba(17,26,46,.85);border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden}
+    .panel h2{margin:0;padding:12px 14px;font-size:13px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,.08)}
+    .panel .content{padding:12px 14px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
+    select,input[type="range"],input[type="number"],textarea{
+      width:100%;background:var(--card);border:1px solid rgba(255,255,255,.12);
+      color:var(--ink);border-radius:10px;padding:10px 10px;font-size:13px;outline:none
+    }
+    input[type="range"]{padding:10px}
+    textarea{min-height:90px;resize:vertical}
+    .small{font-size:12px;color:var(--muted)}
+    .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    button{
+      background:var(--card);border:1px solid rgba(255,255,255,.14);color:var(--ink);
+      padding:10px 12px;border-radius:10px;font-size:13px;cursor:pointer
+    }
+    button.primary{border-color:rgba(90,167,255,.6);box-shadow:0 0 0 2px rgba(90,167,255,.15) inset}
+    button.good{border-color:rgba(61,220,151,.55);box-shadow:0 0 0 2px rgba(61,220,151,.12) inset}
+    button:hover{filter:brightness(1.08)}
+    .value{float:right;color:var(--ink)}
+    .chip{display:inline-flex;gap:8px;align-items:center;padding:8px 10px;border-radius:999px;
+      background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:12px;color:var(--muted)}
+    .chip b{color:var(--ink)}
+    .pitchWrap{padding:14px}
+    svg{width:100%;height:auto;display:block}
+    .node{cursor:pointer}
+    .node rect{fill:#0b274b;stroke:rgba(255,255,255,.25);stroke-width:1.2}
+    .node text{fill:#fff;font-size:12px;font-weight:700}
+    .hint{font-size:12px;color:var(--muted);margin-top:10px}
+    .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .legend .chip{background:rgba(0,0,0,.15)}
+    .toast{position:fixed;right:14px;bottom:14px;background:rgba(17,26,46,.92);
+      border:1px solid rgba(255,255,255,.12);padding:10px 12px;border-radius:12px;
+      color:var(--ink);font-size:13px;display:none}
+    .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas; padding:2px 6px;border-radius:6px;
+      border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); color:var(--ink); font-size:12px}
+  </style>
+</head>
+<body>
+<header>
+  <h1>FC26 3-5-2 Tactics Builder</h1>
+  <span class="pill">Dynamic diagram + presets + import/export</span>
+</header>
+
+<main>
+  <!-- LEFT: CONTROLS -->
+  <section class="panel">
+    <h2>Preset & Match Scenario</h2>
+    <div class="content">
+      <div class="row">
+        <div>
+          <label>Scenario</label>
+          <select id="scenario">
+            <option value="strong">Vs Strong Teams (Def 7 / Att 3)</option>
+            <option value="medium">Vs Medium Teams (Att 5 / Def 7)</option>
+            <option value="weak">Vs Weak Teams (Att 6 / Def 7)</option>
+          </select>
+        </div>
+        <div>
+          <label>Formation</label>
+          <select id="formation" disabled>
+            <option>3-5-2</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span class="chip"><b>Tip:</b> click any player on the pitch to edit their instructions</span>
+        <span class="chip"><span class="kbd">Ctrl</span>+<span class="kbd">S</span> export JSON</span>
+      </div>
+    </div>
+
+    <h2>Team Tactics (FC26)</h2>
+    <div class="content">
+      <div class="row">
+        <div>
+          <label>Defensive Style</label>
+          <select id="defStyle">
+            <option>Balanced</option>
+            <option>Press After Possession Loss</option>
+            <option>Press On Heavy Touch</option>
+            <option>Drop Back</option>
+            <option>Constant Pressure</option>
+          </select>
+        </div>
+        <div>
+          <label>Build Up Play</label>
+          <select id="buildUp">
+            <option>Balanced</option>
+            <option>Fast Build Up</option>
+            <option>Slow Build Up</option>
+            <option>Long Ball</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Width <span class="value" id="widthVal"></span></label>
+          <input id="width" type="range" min="1" max="100" value="45"/>
+        </div>
+        <div>
+          <label>Depth <span class="value" id="depthVal"></span></label>
+          <input id="depth" type="range" min="1" max="100" value="45"/>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Chance Creation</label>
+          <select id="chance">
+            <option>Direct Passing</option>
+            <option>Balanced</option>
+            <option>Possession</option>
+            <option>Forward Runs</option>
+          </select>
+        </div>
+        <div>
+          <label>Players in Box <span class="value" id="pibVal"></span></label>
+          <input id="pib" type="range" min="1" max="10" value="4"/>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Corners</label>
+          <input id="corners" type="number" min="1" max="5" value="2"/>
+        </div>
+        <div>
+          <label>Free Kicks</label>
+          <input id="freekicks" type="number" min="1" max="5" value="2"/>
+        </div>
+      </div>
+
+      <div class="hint">
+        Rest-defence rule: keep <b>3 CB + CDM</b> behind the ball in all scenarios.
+      </div>
+    </div>
+
+    <h2>Selected Player Instructions</h2>
+    <div class="content">
+      <div class="row">
+        <div>
+          <label>Selected Player</label>
+          <select id="selectedPlayer"></select>
+        </div>
+        <div>
+          <label>Role Label (optional)</label>
+          <input id="roleLabel" placeholder="e.g., Anchor / Overlap / Target"/>
+        </div>
+      </div>
+
+      <label>Instructions (one per line)</label>
+      <textarea id="instructions" placeholder="e.g., Stay Back While Attacking&#10;Cut Passing Lanes&#10;Cover Center"></textarea>
+
+      <div class="btns">
+        <button class="primary" id="applyPlayer">Apply to Player</button>
+        <button id="resetPlayer">Reset Player</button>
+      </div>
+
+      <div class="btns">
+        <button class="good" id="exportBtn">Export Preset (JSON)</button>
+        <button id="importBtn">Import Preset (JSON)</button>
+        <button id="copyLinkBtn">Copy Share Link</button>
+      </div>
+
+      <div class="small">Share link stores settings in the URL hash (no server needed).</div>
+    </div>
+  </section>
+
+  <!-- RIGHT: PITCH / DIAGRAM -->
+  <section class="panel">
+    <h2>Dynamic Diagram (click players to edit)</h2>
+    <div class="pitchWrap">
+      <!-- Simple pitch in SVG -->
+      <svg id="pitch" viewBox="0 0 900 520" aria-label="Pitch">
+        <!-- pitch background -->
+        <rect x="0" y="0" width="900" height="520" rx="18" fill="var(--pitch)"/>
+        <!-- lines -->
+        <rect x="40" y="30" width="820" height="460" fill="none" stroke="var(--lines)" stroke-width="3"/>
+        <line x1="450" y1="30" x2="450" y2="490" stroke="var(--lines)" stroke-width="3"/>
+        <circle cx="450" cy="260" r="60" fill="none" stroke="var(--lines)" stroke-width="3"/>
+        <circle cx="450" cy="260" r="4" fill="var(--lines)"/>
+        <!-- boxes -->
+        <rect x="40" y="160" width="130" height="200" fill="none" stroke="var(--lines)" stroke-width="3"/>
+        <rect x="730" y="160" width="130" height="200" fill="none" stroke="var(--lines)" stroke-width="3"/>
+        <rect x="40" y="200" width="60" height="120" fill="none" stroke="var(--lines)" stroke-width="3"/>
+        <rect x="800" y="200" width="60" height="120" fill="none" stroke="var(--lines)" stroke-width="3"/>
+
+        <!-- nodes injected by JS -->
+        <g id="nodes"></g>
+
+        <!-- scenario label -->
+        <text id="scenarioLabel" x="60" y="75" fill="rgba(255,255,255,.85)" font-size="16" font-weight="700"></text>
+      </svg>
+
+      <div class="hint">
+        Diagram shows your “in-possession intent”. For strong teams, wingbacks drop; for weak teams, both wingbacks push.
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // --- Positions (3-5-2) with default coordinates (left-to-right attack direction) ---
+  const POS = [
+    {id:"LCB", label:"LCB", x:210, y:300},
+    {id:"CB",  label:"CB",  x:210, y:260},
+    {id:"RCB", label:"RCB", x:210, y:220},
+
+    {id:"LWB", label:"LWB", x:360, y:350},
+    {id:"CM",  label:"CM",  x:390, y:260},
+    {id:"CDM", label:"CDM", x:330, y:260},
+    {id:"CAM", label:"CAM", x:470, y:260},
+    {id:"RWB", label:"RWB", x:360, y:170},
+
+    {id:"LS",  label:"ST",  x:650, y:290},
+    {id:"RS",  label:"ST",  x:650, y:230},
+  ];
+
+  // Scenario presets
+  const PRESETS = {
+    strong: {
+      tactics: { defStyle:"Balanced", width:40, depth:45, buildUp:"Balanced", chance:"Direct Passing", pib:4, corners:2, freekicks:2 },
+      players: {
+        LWB:{role:"Drop", instr:["Come Back On Defence","Balanced Attack"]},
+        RWB:{role:"Drop", instr:["Come Back On Defence","Balanced Attack"]},
+        CDM:{role:"Anchor", instr:["Stay Back While Attacking","Cut Passing Lanes","Cover Center"]},
+        CM:{role:"Support", instr:["Balanced Attack","Cover Wing"]},
+        CAM:{role:"Link", instr:["Stay Forward","Free Roam"]},
+        LS:{role:"Run", instr:["Stay Forward","Get In Behind"]},
+        RS:{role:"Run", instr:["Stay Forward","Get In Behind"]},
+      },
+      diagramTweaks: { wingbacks:"low" }
+    },
+    medium: {
+      tactics: { defStyle:"Balanced", width:45, depth:55, buildUp:"Balanced", chance:"Direct Passing", pib:5, corners:3, freekicks:3 },
+      players: {
+        LWB:{role:"Join", instr:["Join The Attack","Overlap"]},
+        RWB:{role:"Hold", instr:["Come Back On Defence"]},
+        CDM:{role:"Anchor", instr:["Stay Back While Attacking","Cover Center"]},
+        CM:{role:"Support", instr:["Get Forward","Free Roam"]},
+        CAM:{role:"Creator", instr:["Stay Forward","Free Roam"]},
+        LS:{role:"Mix", instr:["Mixed Attack"]},
+        RS:{role:"Behind", instr:["Get In Behind"]},
+      },
+      diagramTweaks: { wingbacks:"oneHigh" }
+    },
+    weak: {
+      tactics: { defStyle:"Press After Possession Loss", width:50, depth:70, buildUp:"Fast Build Up", chance:"Direct Passing", pib:6, corners:3, freekicks:3 },
+      players: {
+        LWB:{role:"Overlap", instr:["Join The Attack","Overlap"]},
+        RWB:{role:"Overlap", instr:["Join The Attack","Overlap"]},
+        CDM:{role:"Anchor+", instr:["Stay Back While Attacking","Aggressive Interceptions","Cover Center"]},
+        CM:{role:"Box", instr:["Get Forward","Get Into Box For Cross"]},
+        CAM:{role:"Free", instr:["Free Roam","Get Into Box For Cross"]},
+        LS:{role:"Hold", instr:["Target Man"]},
+        RS:{role:"Run", instr:["Get In Behind"]},
+      },
+      diagramTweaks: { wingbacks:"high" }
+    }
+  };
+
+  // State
+  const state = {
+    scenario: "strong",
+    tactics: structuredClone(PRESETS.strong.tactics),
+    players: initPlayers(),
+    selected: "CDM"
+  };
+
+  function initPlayers(){
+    const base = {};
+    for (const p of POS) base[p.id] = {role:"", instr:[]};
+    return base;
+  }
+
+  // Elements
+  const el = (id)=>document.getElementById(id);
+  const scenarioSel = el("scenario");
+  const defStyleSel = el("defStyle");
+  const buildUpSel = el("buildUp");
+  const chanceSel = el("chance");
+  const widthR = el("width");
+  const depthR = el("depth");
+  const pibR = el("pib");
+  const cornersN = el("corners");
+  const freekicksN = el("freekicks");
+
+  const widthVal = el("widthVal");
+  const depthVal = el("depthVal");
+  const pibVal = el("pibVal");
+
+  const selectedPlayerSel = el("selectedPlayer");
+  const roleLabel = el("roleLabel");
+  const instructionsTa = el("instructions");
+
+  const nodesG = el("nodes");
+  const scenarioLabel = el("scenarioLabel");
+  const toast = el("toast");
+
+  // Populate player dropdown
+  POS.forEach(p=>{
+    const opt=document.createElement("option");
+    opt.value=p.id; opt.textContent=p.id;
+    selectedPlayerSel.appendChild(opt);
+  });
+
+  // Render nodes
+  function drawNodes(){
+    nodesG.innerHTML="";
+    const coords = getScenarioCoords();
+
+    for(const p of POS){
+      const c = coords[p.id] || {x:p.x,y:p.y};
+      const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+      g.setAttribute("class","node");
+      g.setAttribute("data-id",p.id);
+
+      const r = document.createElementNS("http://www.w3.org/2000/svg","rect");
+      r.setAttribute("x",c.x-34); r.setAttribute("y",c.y-18);
+      r.setAttribute("width",68); r.setAttribute("height",36);
+      r.setAttribute("rx",10);
+
+      const t = document.createElementNS("http://www.w3.org/2000/svg","text");
+      t.setAttribute("x",c.x); t.setAttribute("y",c.y+4);
+      t.setAttribute("text-anchor","middle");
+      const role = state.players[p.id]?.role ? ` (${state.players[p.id].role})` : "";
+      t.textContent = (p.label === "ST" ? p.label : p.id) + role;
+
+      g.appendChild(r); g.appendChild(t);
+
+      g.addEventListener("click",()=>{
+        state.selected = p.id;
+        selectedPlayerSel.value = p.id;
+        loadSelectedPlayer();
+        flash(`Selected ${p.id}`);
+      });
+
+      nodesG.appendChild(g);
+    }
+
+    scenarioLabel.textContent = scenarioSel.options[scenarioSel.selectedIndex].text;
+  }
+
+  // Adjust diagram per scenario (simple but effective)
+  function getScenarioCoords(){
+    const s = state.scenario;
+    const base = Object.fromEntries(POS.map(p=>[p.id,{x:p.x,y:p.y}]));
+
+    if (s==="strong"){
+      // wingbacks lower & compact
+      base.LWB.y += 35; base.RWB.y -= 35;
+      base.CAM.x -= 10; base.LS.x -= 10; base.RS.x -= 10;
+    }
+    if (s==="medium"){
+      // one wingback high (LWB) by default
+      base.LWB.x += 40; base.LWB.y -= 55;
+      base.RWB.y += 10;
+      base.CM.x += 20;
+    }
+    if (s==="weak"){
+      // both wingbacks high + CM pushes
+      base.LWB.x += 45; base.LWB.y -= 70;
+      base.RWB.x += 45; base.RWB.y += 70;
+      base.CM.x += 50;
+      base.CAM.x += 30;
+      base.LS.x += 10; base.RS.x += 10;
+    }
+    return base;
+  }
+
+  // Sync UI from state
+  function renderUI(){
+    defStyleSel.value = state.tactics.defStyle;
+    buildUpSel.value = state.tactics.buildUp;
+    chanceSel.value = state.tactics.chance;
+    widthR.value = state.tactics.width;
+    depthR.value = state.tactics.depth;
+    pibR.value = state.tactics.pib;
+    cornersN.value = state.tactics.corners;
+    freekicksN.value = state.tactics.freekicks;
+
+    widthVal.textContent = state.tactics.width;
+    depthVal.textContent = state.tactics.depth;
+    pibVal.textContent = state.tactics.pib;
+
+    selectedPlayerSel.value = state.selected;
+    loadSelectedPlayer();
+    drawNodes();
+    writeHash();
+  }
+
+  function loadSelectedPlayer(){
+    const p = state.players[state.selected] || {role:"",instr:[]};
+    roleLabel.value = p.role || "";
+    instructionsTa.value = (p.instr || []).join("\n");
+  }
+
+  // Apply preset
+  function applyPreset(which){
+    state.scenario = which;
+    state.tactics = structuredClone(PRESETS[which].tactics);
+    // reset players then apply preset players
+    state.players = initPlayers();
+    for(const [k,v] of Object.entries(PRESETS[which].players)){
+      state.players[k] = {role:v.role, instr:[...v.instr]};
+    }
+    state.selected = "CDM";
+    renderUI();
+    flash("Preset applied");
+  }
+
+  // Update state from tactics inputs
+  function wireTactics(){
+    defStyleSel.onchange = ()=>{ state.tactics.defStyle = defStyleSel.value; renderUI(); };
+    buildUpSel.onchange  = ()=>{ state.tactics.buildUp  = buildUpSel.value; renderUI(); };
+    chanceSel.onchange   = ()=>{ state.tactics.chance   = chanceSel.value; renderUI(); };
+
+    widthR.oninput = ()=>{ state.tactics.width = +widthR.value; widthVal.textContent=widthR.value; writeHash(); };
+    depthR.oninput = ()=>{ state.tactics.depth = +depthR.value; depthVal.textContent=depthR.value; writeHash(); };
+    pibR.oninput   = ()=>{ state.tactics.pib   = +pibR.value;   pibVal.textContent=pibR.value; writeHash(); };
+
+    cornersN.onchange   = ()=>{ state.tactics.corners   = +cornersN.value; writeHash(); };
+    freekicksN.onchange = ()=>{ state.tactics.freekicks = +freekicksN.value; writeHash(); };
+  }
+
+  // Player editor
+  el("applyPlayer").onclick = ()=>{
+    const role = roleLabel.value.trim();
+    const instr = instructionsTa.value.split("\n").map(s=>s.trim()).filter(Boolean);
+    state.players[state.selected] = {role, instr};
+    renderUI();
+    flash("Player updated");
+  };
+  el("resetPlayer").onclick = ()=>{
+    state.players[state.selected] = {role:"", instr:[]};
+    renderUI();
+    flash("Player reset");
+  };
+  selectedPlayerSel.onchange = ()=>{
+    state.selected = selectedPlayerSel.value;
+    loadSelectedPlayer();
+  };
+
+  // Scenario change
+  scenarioSel.onchange = ()=>applyPreset(scenarioSel.value);
+
+  // Export / Import
+  function exportJSON(){
+    const data = JSON.stringify(state, null, 2);
+    const blob = new Blob([data], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `fc26-352-${state.scenario}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+  function importJSON(){
+    const inp = document.createElement("input");
+    inp.type = "file"; inp.accept = "application/json";
+    inp.onchange = async ()=>{
+      const file = inp.files[0]; if(!file) return;
+      const text = await file.text();
+      const obj = JSON.parse(text);
+      // minimal validation
+      if(!obj || !obj.tactics || !obj.players) { flash("Invalid preset"); return; }
+      Object.assign(state, obj);
+      scenarioSel.value = state.scenario || "strong";
+      renderUI();
+      flash("Imported");
+    };
+    inp.click();
+  }
+  el("exportBtn").onclick = exportJSON;
+  el("importBtn").onclick = importJSON;
+
+  // Share link (hash)
+  function writeHash(){
+    const compact = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    location.hash = compact;
+  }
+  function readHash(){
+    if(!location.hash || location.hash.length<2) return false;
+    try{
+      const raw = decodeURIComponent(escape(atob(location.hash.slice(1))));
+      const obj = JSON.parse(raw);
+      if(obj && obj.tactics && obj.players){
+        Object.assign(state, obj);
+        return true;
+      }
+    }catch(e){}
+    return false;
+  }
+  el("copyLinkBtn").onclick = async ()=>{
+    try{
+      await navigator.clipboard.writeText(location.href);
+      flash("Link copied");
+    }catch(e){
+      flash("Copy failed (browser blocked)");
+    }
+  };
+
+  // Toast
+  let toastTimer=null;
+  function flash(msg){
+    toast.textContent = msg;
+    toast.style.display="block";
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>toast.style.display="none", 1600);
+  }
+
+  // Keyboard shortcut
+  window.addEventListener("keydown",(e)=>{
+    if((e.ctrlKey || e.metaKey) && e.key.toLowerCase()==="s"){
+      e.preventDefault();
+      exportJSON();
+    }
+  });
+
+  // init
+  wireTactics();
+  const hasHash = readHash();
+  if(hasHash){
+    scenarioSel.value = state.scenario || "strong";
+    renderUI();
+  }else{
+    applyPreset("strong");
+    scenarioSel.value = "strong";
+  }
+</script>
+</body>
+</html>
