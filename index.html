@@ -3,39 +3,31 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>FC26 3-5-2 Interactive Tactics Board (Animated)</title>
+  <title>FC26 3-5-2 Dynamic Phase Board</title>
   <style>
     :root{
-      --bg:#070b14;
-      --panel:#0f1730;
-      --ink:#eaf0ff;
-      --muted:#a9b6d6;
-      --accent:#5aa7ff;
-      --good:#3ddc97;
-      --warn:#ffcc66;
-
-      --pitch:#0f3d2e;
-      --lines:rgba(255,255,255,.22);
-      --card:#0b1224;
+      --bg:#070b14; --panel:#0f1730; --ink:#eaf0ff; --muted:#a9b6d6;
+      --accent:#5aa7ff; --good:#3ddc97; --warn:#ffcc66;
+      --pitch:#0f3d2e; --lines:rgba(255,255,255,.22); --card:#0b1224;
     }
     *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
     body{margin:0;background:linear-gradient(180deg,#050812 0%, var(--bg) 100%);color:var(--ink)}
     header{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;gap:12px}
     header h1{margin:0;font-size:14px;letter-spacing:.3px;font-weight:700}
     header .sub{font-size:12px;color:var(--muted)}
-    main{display:grid;grid-template-columns:420px 1fr;gap:14px;padding:14px;max-width:1280px;margin:0 auto}
+    main{display:grid;grid-template-columns:440px 1fr;gap:14px;padding:14px;max-width:1320px;margin:0 auto}
     @media (max-width:980px){main{grid-template-columns:1fr}}
     .panel{background:rgba(15,23,48,.92);border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden}
     .panel h2{margin:0;padding:12px 14px;font-size:12px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;gap:8px}
     .panel .content{padding:12px 14px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
     label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
-    select, textarea, input[type="text"]{
+    select, textarea, input[type="text"], input[type="number"]{
       width:100%; background:var(--card); border:1px solid rgba(255,255,255,.12);
       color:var(--ink); border-radius:10px; padding:10px; font-size:13px; outline:none;
     }
-    textarea{min-height:84px;resize:vertical}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    textarea{min-height:86px;resize:vertical}
     button{
       background:var(--card);border:1px solid rgba(255,255,255,.14);color:var(--ink);
       padding:10px 12px;border-radius:10px;font-size:13px;cursor:pointer
@@ -60,62 +52,56 @@
     .pnode:active{cursor:grabbing}
     .pnode circle{fill:#0b274b;stroke:rgba(255,255,255,.28);stroke-width:1.5}
     .pnode text{fill:#fff;font-size:12px;font-weight:800;paint-order:stroke;stroke:rgba(0,0,0,.35);stroke-width:3}
-    .selected circle{stroke:rgba(90,167,255,.9);stroke-width:2.6}
-    .ghost{opacity:.40}
-    .arrow{stroke:rgba(90,167,255,.55);stroke-width:2.0;fill:none}
-    .arrowHead{fill:rgba(90,167,255,.65)}
-    .toast{position:fixed;right:14px;bottom:14px;background:rgba(15,23,48,.95);border:1px solid rgba(255,255,255,.12);padding:10px 12px;border-radius:12px;color:var(--ink);font-size:13px;display:none;max-width:min(420px,calc(100vw - 28px))}
+    .selected circle{stroke:rgba(90,167,255,.95);stroke-width:2.7}
+    .ghost{opacity:.28}
+    .path{stroke:rgba(90,167,255,.5);stroke-width:2;fill:none;stroke-dasharray:6 6}
+    .toast{position:fixed;right:14px;bottom:14px;background:rgba(15,23,48,.95);border:1px solid rgba(255,255,255,.12);padding:10px 12px;border-radius:12px;color:var(--ink);font-size:13px;display:none;max-width:min(460px,calc(100vw - 28px))}
     .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas;padding:2px 6px;border-radius:6px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:var(--ink);font-size:12px}
   </style>
 </head>
 <body>
 <header>
   <div>
-    <h1>FC26 3-5-2 Interactive Tactics Board</h1>
-    <div class="sub">Drag players • animate between phases • per-player instructions</div>
+    <h1>FC26 3-5-2 Dynamic Phase Board</h1>
+    <div class="sub">Base shape → click On Ball / Defensive → players move dynamically + optional runs</div>
   </div>
-  <div class="chip"><b>Formation:</b> 3-5-2</div>
+  <div class="chip"><b>Midfield:</b> 2 CDMs • <b>Wide:</b> wingers as wingbacks</div>
 </header>
 
 <main>
+  <!-- LEFT -->
   <section class="panel">
     <h2>
-      Board Mode
+      Phases
       <span class="chip"><span class="kbd">Ctrl</span>+<span class="kbd">S</span> Export</span>
     </h2>
     <div class="content">
       <div class="row">
-        <div>
-          <label>Phase (edit shape)</label>
-          <div class="seg">
-            <button id="phaseAttack" class="active" type="button">On ball</button>
-            <button id="phaseDefend" type="button">Off ball</button>
-          </div>
-        </div>
-        <div>
-          <label>Animate on phase switch</label>
-          <div class="seg">
-            <button id="autoAnimOn" class="active" type="button">On</button>
-            <button id="autoAnimOff" type="button">Off</button>
-          </div>
-        </div>
+        <button id="goBase" class="primary" type="button">◼ Base (stagnant)</button>
+        <button id="goOnBall" class="good" type="button">▶ On Ball</button>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="goDef" class="good" type="button">▶ Defensive</button>
+        <button id="playRun" type="button">⟲ Play Runs</button>
       </div>
 
-      <div class="row" style="margin-top:10px">
+      <div class="hr"></div>
+
+      <div class="row">
         <div>
-          <label>Movement speed</label>
+          <label>Animation speed</label>
           <select id="animMs">
-            <option value="500">Fast (0.5s)</option>
-            <option value="900" selected>Normal (0.9s)</option>
+            <option value="450">Fast (0.45s)</option>
+            <option value="850" selected>Normal (0.85s)</option>
             <option value="1400">Smooth (1.4s)</option>
-            <option value="2000">Slow (2.0s)</option>
+            <option value="2200">Slow (2.2s)</option>
           </select>
         </div>
         <div>
-          <label>Visual helpers</label>
+          <label>Show movement paths</label>
           <div class="seg">
-            <button id="ghostOn" class="active" type="button">Ghost</button>
-            <button id="arrowsOn" type="button">Arrows</button>
+            <button id="pathsOn" class="active" type="button">On</button>
+            <button id="pathsOff" type="button">Off</button>
           </div>
         </div>
       </div>
@@ -123,26 +109,21 @@
       <div class="hr"></div>
 
       <div class="row">
-        <button id="toAttack" class="good" type="button">▶ Animate to On ball</button>
-        <button id="toDefend" class="good" type="button">▶ Animate to Off ball</button>
+        <button id="reset" class="warn" type="button">Reset default base</button>
+        <button id="swapOBDB" type="button">Swap OnBall/Def offsets</button>
       </div>
 
       <div class="row" style="margin-top:10px">
-        <button id="resetDefault" class="warn" type="button">Reset default 3-5-2</button>
-        <button id="swapPhases" type="button">Swap shapes</button>
-      </div>
-
-      <div class="row" style="margin-top:10px">
-        <button id="exportBtn" class="primary" type="button">Export JSON</button>
+        <button id="exportBtn" type="button">Export JSON</button>
         <button id="importBtn" type="button">Import JSON</button>
       </div>
 
       <div class="small" style="margin-top:10px">
-        Use animate buttons to “see” the movement. Drag positions in each phase to define the paths.
+        Drag players in <b>Base</b> mode. Offsets determine where they move on On Ball / Defensive.
       </div>
     </div>
 
-    <h2>Selected Player</h2>
+    <h2>Player Setup</h2>
     <div class="content">
       <div class="row">
         <div>
@@ -150,42 +131,74 @@
           <select id="playerSelect"></select>
         </div>
         <div>
+          <label>Role preset</label>
+          <select id="rolePreset">
+            <option value="custom">Custom</option>
+            <option value="wingback">Winger → Wingback</option>
+            <option value="anchor">CDM Anchor (stays)</option>
+            <option value="shuttler">CDM Shuttler (steps up)</option>
+            <option value="cam">CAM Creator</option>
+            <option value="strikerRun">Striker Runner</option>
+            <option value="strikerHold">Striker Hold</option>
+            <option value="cb">CB Stay</option>
+            <option value="gk">GK</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row3" style="margin-top:10px">
+        <div>
           <label>Label (optional)</label>
-          <input id="playerLabel" type="text" placeholder="e.g., Anchor / Overlap / Target" />
+          <input id="label" type="text" placeholder="e.g., Anchor / Overlap" />
+        </div>
+        <div>
+          <label>On Ball offset X</label>
+          <input id="obx" type="number" step="5" />
+        </div>
+        <div>
+          <label>On Ball offset Y</label>
+          <input id="oby" type="number" step="5" />
         </div>
       </div>
 
-      <div class="row">
+      <div class="row3" style="margin-top:10px">
         <div>
-          <label>Custom (On ball) — one per line</label>
-          <textarea id="instrAttack" placeholder="Join the Attack&#10;Overlap&#10;Get In Behind"></textarea>
+          <label>Run (On Ball)</label>
+          <select id="runType">
+            <option value="none">None</option>
+            <option value="diag">Diagonal run</option>
+            <option value="wide">Wide run</option>
+            <option value="drop">Drop short</option>
+          </select>
         </div>
         <div>
-          <label>Custom (Off ball) — one per line</label>
-          <textarea id="instrDefend" placeholder="Come Back On Defence&#10;Cover Center&#10;Cut Passing Lanes"></textarea>
+          <label>Def offset X</label>
+          <input id="dbx" type="number" step="5" />
+        </div>
+        <div>
+          <label>Def offset Y</label>
+          <input id="dby" type="number" step="5" />
         </div>
       </div>
 
-      <div class="row">
-        <button id="applyPlayer" class="primary" type="button">Apply</button>
-        <button id="clearPlayer" type="button">Clear</button>
+      <label style="margin-top:10px">Instructions (free text)</label>
+      <textarea id="instr" placeholder="Drop back / Stay forward / Cover center / Overlap..."></textarea>
+
+      <div class="row" style="margin-top:10px">
+        <button id="apply" class="primary" type="button">Apply player settings</button>
+        <button id="clear" type="button">Clear player settings</button>
       </div>
     </div>
   </section>
 
+  <!-- RIGHT -->
   <section class="panel">
     <h2>
       Pitch
-      <span id="phaseBadge" class="chip"><b>On ball</b></span>
+      <span id="modeChip" class="chip"><b>Base</b></span>
     </h2>
     <div class="pitchWrap">
       <svg id="pitch" viewBox="0 0 900 520" aria-label="Pitch">
-        <defs>
-          <marker id="arrowhead" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
-            <polygon class="arrowHead" points="0,0 10,4 0,8"></polygon>
-          </marker>
-        </defs>
-
         <rect x="0" y="0" width="900" height="520" rx="18" fill="var(--pitch)"/>
         <rect x="40" y="30" width="820" height="460" fill="none" stroke="var(--lines)" stroke-width="3"/>
         <line x1="450" y1="30" x2="450" y2="490" stroke="var(--lines)" stroke-width="3"/>
@@ -196,15 +209,13 @@
         <rect x="40" y="200" width="60" height="120" fill="none" stroke="var(--lines)" stroke-width="3"/>
         <rect x="800" y="200" width="60" height="120" fill="none" stroke="var(--lines)" stroke-width="3"/>
 
-        <g id="arrows"></g>
-        <g id="ghost"></g>
+        <g id="paths"></g>
         <g id="nodes"></g>
-
-        <text id="titleText" x="60" y="75" fill="rgba(255,255,255,.88)" font-size="16" font-weight="800"></text>
       </svg>
 
       <div class="hint">
-        <b>Dynamic:</b> press “Animate to On ball / Off ball” to see the players move to their target positions.
+        <b>How it works:</b> Base = stagnant. On Ball / Defensive = dynamic targets computed as <b>Base + offsets</b>.
+        “Play Runs” adds a short extra run animation (optional per player).
       </div>
     </div>
   </section>
@@ -213,85 +224,56 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  const FORMATION = "3-5-2";
-
+  // ---------------- Model ----------------
   const PLAYERS = [
-    { id:"GK",  short:"GK"  },
-    { id:"LCB", short:"LCB" }, { id:"CB", short:"CB" }, { id:"RCB", short:"RCB" },
-    { id:"LWB", short:"LWB" }, { id:"CDM", short:"CDM" }, { id:"CM", short:"CM" }, { id:"CAM", short:"CAM" }, { id:"RWB", short:"RWB" },
-    { id:"LS",  short:"ST"  }, { id:"RS", short:"ST" }
+    {id:"GK", short:"GK"},
+    {id:"LCB", short:"LCB"},{id:"CB", short:"CB"},{id:"RCB", short:"RCB"},
+    {id:"LW", short:"LW"},   // winger acting as wingback
+    {id:"CDM1", short:"CDM"},
+    {id:"CDM2", short:"CDM"},
+    {id:"CAM", short:"CAM"},
+    {id:"RW", short:"RW"},   // winger acting as wingback
+    {id:"LS", short:"ST"},{id:"RS", short:"ST"},
   ];
 
-  const DEFAULT_ATTACK = {
-    GK:{x:90,y:260},
-    LCB:{x:210,y:320}, CB:{x:210,y:260}, RCB:{x:210,y:200},
-    LWB:{x:420,y:380}, CDM:{x:350,y:260}, CM:{x:430,y:300}, CAM:{x:520,y:260}, RWB:{x:420,y:140},
-    LS:{x:680,y:290}, RS:{x:680,y:230}
+  // Default BASE (stagnant). You drag these in Base mode.
+  const DEFAULT_BASE = {
+    GK:{x:95,y:260},
+    LCB:{x:220,y:320}, CB:{x:220,y:260}, RCB:{x:220,y:200},
+    LW:{x:360,y:390},  RW:{x:360,y:130},
+    CDM1:{x:330,y:240}, CDM2:{x:330,y:290},
+    CAM:{x:460,y:260},
+    LS:{x:620,y:290}, RS:{x:620,y:230},
   };
 
-  const DEFAULT_DEFEND = {
-    GK:{x:90,y:260},
-    LCB:{x:210,y:320}, CB:{x:210,y:260}, RCB:{x:210,y:200},
-    LWB:{x:300,y:370}, CDM:{x:300,y:260}, CM:{x:360,y:300}, CAM:{x:410,y:260}, RWB:{x:300,y:150},
-    LS:{x:600,y:295}, RS:{x:600,y:225}
-  };
-
-  const STORAGE_KEY = "fc26_352_board_anim_v1";
+  const STORAGE_KEY = "fc26_dynamic_phase_board_v1";
 
   const state = {
-    meta:{ formation:FORMATION, version:1 },
     ui:{
-      phase:"attack",
-      selected:"CDM",
-      showGhost:true,
-      showArrows:false,
-      autoAnimate:true,
-      animMs:900
+      mode:"base", // base | onball | defend
+      selected:"CDM1",
+      showPaths:true,
+      animMs:850
     },
-    players: Object.fromEntries(PLAYERS.map(p=>[p.id,{
+    base: structuredClone(DEFAULT_BASE),
+    player: Object.fromEntries(PLAYERS.map(p=>[p.id,{
       label:"",
-      instrAttack:[],
-      instrDefend:[]
+      instr:"",
+      on:{dx:0, dy:0},
+      def:{dx:0, dy:0},
+      run:"none"
     }])),
-    // positions you edit (targets)
-    positions:{
-      attack: structuredClone(DEFAULT_ATTACK),
-      defend: structuredClone(DEFAULT_DEFEND)
-    },
-    // positions currently drawn (animated)
-    renderPos:{
-      attack: structuredClone(DEFAULT_ATTACK),
-      defend: structuredClone(DEFAULT_DEFEND)
-    }
+    // current rendered positions (animated)
+    render: structuredClone(DEFAULT_BASE)
   };
 
+  // ---------------- Helpers ----------------
   const $ = (id)=>document.getElementById(id);
-
+  const pitch = $("pitch");
   const nodesG = $("nodes");
-  const ghostG = $("ghost");
-  const arrowsG = $("arrows");
-  const titleText = $("titleText");
-  const phaseBadge = $("phaseBadge");
+  const pathsG = $("paths");
   const toast = $("toast");
-
-  const phaseAttackBtn = $("phaseAttack");
-  const phaseDefendBtn = $("phaseDefend");
-  const autoOnBtn = $("autoAnimOn");
-  const autoOffBtn = $("autoAnimOff");
-  const ghostBtn = $("ghostOn");
-  const arrowsBtn = $("arrowsOn");
-  const animMsSel = $("animMs");
-
-  const playerSelect = $("playerSelect");
-  const playerLabel = $("playerLabel");
-  const instrAttackTa = $("instrAttack");
-  const instrDefendTa = $("instrDefend");
-
-  for(const p of PLAYERS){
-    const opt=document.createElement("option");
-    opt.value=p.id; opt.textContent=p.id;
-    playerSelect.appendChild(opt);
-  }
+  const modeChip = $("modeChip");
 
   function flash(msg){
     toast.textContent = msg;
@@ -300,15 +282,26 @@
     flash._t=setTimeout(()=>toast.style.display="none", 1600);
   }
 
-  function saveLocal(){
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+  function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+  const BOUNDS = { minX:55, maxX:845, minY:45, maxY:475 };
+
+  function clientToSvg(svgEl, clientX, clientY){
+    const pt = svgEl.createSVGPoint();
+    pt.x=clientX; pt.y=clientY;
+    const ctm = svgEl.getScreenCTM();
+    if(!ctm) return {x:0,y:0};
+    const inv = ctm.inverse();
+    const sp = pt.matrixTransform(inv);
+    return {x:sp.x, y:sp.y};
   }
+
+  function saveLocal(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
   function loadLocal(){
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
       if(!raw) return false;
       const obj = JSON.parse(raw);
-      if(obj?.positions?.attack && obj?.positions?.defend && obj?.renderPos && obj?.players){
+      if(obj?.base && obj?.player && obj?.render){
         Object.assign(state, obj);
         return true;
       }
@@ -322,7 +315,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "fc26-352-board-animated.json";
+    a.download = "fc26-dynamic-352.json";
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -334,9 +327,7 @@
       try{
         const txt=await f.text();
         const obj=JSON.parse(txt);
-        if(!obj?.positions?.attack || !obj?.positions?.defend || !obj?.renderPos || !obj?.players){
-          flash("Invalid file"); return;
-        }
+        if(!obj?.base || !obj?.player || !obj?.render){ flash("Invalid file"); return; }
         Object.assign(state, obj);
         renderAll();
         flash("Imported");
@@ -345,226 +336,208 @@
     inp.click();
   }
 
-  function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
-  const BOUNDS = { minX:55, maxX:845, minY:45, maxY:475 };
-
-  function clientToSvg(svgEl, clientX, clientY){
-    const pt = svgEl.createSVGPoint();
-    pt.x=clientX; pt.y=clientY;
-    const ctm = svgEl.getScreenCTM();
-    if(!ctm) return {x:0,y:0};
-    const inv = ctm.inverse();
-    const sp = pt.matrixTransform(inv);
-    return {x:sp.x, y:sp.y};
-  }
-
-  function renderTitle(){
-    const phase = state.ui.phase;
-    titleText.textContent = `${FORMATION} • ${phase==="attack" ? "On ball (Attacking shape)" : "Off ball (Defending shape)"}`;
-    phaseBadge.innerHTML = phase==="attack" ? "<b>On ball</b>" : "<b>Off ball</b>";
-  }
-
-  function renderToggles(){
-    phaseAttackBtn.classList.toggle("active", state.ui.phase==="attack");
-    phaseDefendBtn.classList.toggle("active", state.ui.phase==="defend");
-
-    autoOnBtn.classList.toggle("active", !!state.ui.autoAnimate);
-    autoOffBtn.classList.toggle("active", !state.ui.autoAnimate);
-
-    ghostBtn.classList.toggle("active", !!state.ui.showGhost);
-    arrowsBtn.classList.toggle("active", !!state.ui.showArrows);
-
-    animMsSel.value = String(state.ui.animMs);
-  }
-
-  function makeNode(id, x, y, isGhost=false){
-    const NS="http://www.w3.org/2000/svg";
-    const g=document.createElementNS(NS,"g");
-    g.setAttribute("class", `pnode${isGhost?" ghost":""}${(!isGhost && state.ui.selected===id)?" selected":""}`);
-    g.dataset.id=id;
-
-    const c=document.createElementNS(NS,"circle");
-    c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", 18);
-
-    const t=document.createElementNS(NS,"text");
-    t.setAttribute("x", x); t.setAttribute("y", y+4); t.setAttribute("text-anchor","middle");
-
-    const short = PLAYERS.find(p=>p.id===id)?.short || id;
-    const label = state.players[id]?.label ? ` (${state.players[id].label})` : "";
-    t.textContent = short + label;
-
-    g.appendChild(c); g.appendChild(t);
-    return g;
-  }
-
-  function renderGhost(){
-    ghostG.innerHTML="";
-    if(!state.ui.showGhost) return;
-
-    const other = state.ui.phase==="attack" ? "defend" : "attack";
-    const pos = state.renderPos[other];
-
+  // Targets = base + offsets
+  function getTargets(mode){
+    const t = {};
     for(const p of PLAYERS){
-      const xy = pos[p.id];
-      ghostG.appendChild(makeNode(p.id, xy.x, xy.y, true));
+      const b = state.base[p.id];
+      const meta = state.player[p.id];
+      if(mode==="base") t[p.id] = {x:b.x, y:b.y};
+      if(mode==="onball") t[p.id] = {x:b.x + meta.on.dx,  y:b.y + meta.on.dy};
+      if(mode==="defend") t[p.id] = {x:b.x + meta.def.dx, y:b.y + meta.def.dy};
     }
+    return t;
   }
-
-  function renderArrows(){
-    arrowsG.innerHTML="";
-    if(!state.ui.showArrows) return;
-
-    const atk = state.renderPos.attack;
-    const def = state.renderPos.defend;
-    const NS="http://www.w3.org/2000/svg";
-
-    for(const p of PLAYERS){
-      const a=atk[p.id], d=def[p.id];
-      const dx=a.x-d.x, dy=a.y-d.y;
-      const dist=Math.hypot(dx,dy);
-      if(dist<12) continue;
-
-      const path=document.createElementNS(NS,"path");
-      path.setAttribute("class","arrow");
-      path.setAttribute("marker-end","url(#arrowhead)");
-
-      const mx=(a.x+d.x)/2, my=(a.y+d.y)/2;
-      const curve=0.18;
-      const cx=mx+(-dy*curve), cy=my+(dx*curve);
-      path.setAttribute("d", `M ${d.x} ${d.y} Q ${cx} ${cy} ${a.x} ${a.y}`);
-      arrowsG.appendChild(path);
-    }
-  }
-
-  function renderNodes(){
-    nodesG.innerHTML="";
-    const phase = state.ui.phase;
-    const pos = state.renderPos[phase];
-
-    for(const p of PLAYERS){
-      const xy = pos[p.id];
-      nodesG.appendChild(makeNode(p.id, xy.x, xy.y, false));
-    }
-    wireDrag();
-  }
-
-  function renderPlayerEditor(){
-    playerSelect.value = state.ui.selected;
-    const p = state.players[state.ui.selected];
-    playerLabel.value = p.label || "";
-    instrAttackTa.value = (p.instrAttack||[]).join("\n");
-    instrDefendTa.value = (p.instrDefend||[]).join("\n");
-  }
-
-  function renderAll(){
-    renderTitle();
-    renderToggles();
-    renderGhost();
-    renderArrows();
-    renderNodes();
-    renderPlayerEditor();
-    saveLocal();
-  }
-
-  // ---------- Animation ----------
-  let anim = null;
 
   function easeInOutCubic(t){
     return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2;
   }
 
-  function startPhaseAnimation(targetPhase){
-    // animate the DRAWN positions of targetPhase to match TARGET positions of targetPhase
-    // and optionally also animate the other phase to its targets (keeps arrows consistent)
+  let animRAF = null;
+
+  function animateTo(mode){
+    // Mode switch should move from wherever we are NOW to the new targets.
+    state.ui.mode = mode;
+
+    const from = structuredClone(state.render);
+    const to = getTargets(mode);
     const ms = state.ui.animMs;
 
-    const from = structuredClone(state.renderPos[targetPhase]);
-    const to = structuredClone(state.positions[targetPhase]);
-
-    const other = targetPhase==="attack" ? "defend" : "attack";
-    const fromOther = structuredClone(state.renderPos[other]);
-    const toOther = structuredClone(state.positions[other]);
-
-    if(anim) cancelAnimationFrame(anim.raf);
-
+    if(animRAF) cancelAnimationFrame(animRAF);
     const t0 = performance.now();
-    anim = { raf:0 };
 
     const step = (now)=>{
       const t = clamp((now - t0)/ms, 0, 1);
       const e = easeInOutCubic(t);
 
-      for(const pl of PLAYERS){
-        const a = from[pl.id], b = to[pl.id];
-        state.renderPos[targetPhase][pl.id] = {
+      for(const p of PLAYERS){
+        const a = from[p.id], b = to[p.id];
+        state.render[p.id] = {
           x: a.x + (b.x - a.x) * e,
           y: a.y + (b.y - a.y) * e
         };
-
-        // keep the non-active phase in sync too (so arrows/ghost don't lag behind)
-        const c = fromOther[pl.id], d = toOther[pl.id];
-        state.renderPos[other][pl.id] = {
-          x: c.x + (d.x - c.x) * e,
-          y: c.y + (d.y - c.y) * e
-        };
       }
 
-      // render without saving every frame
-      renderTitle();
-      renderGhost();
-      renderArrows();
-      renderNodes();
+      renderPitch();
 
-      if(t < 1){
-        anim.raf = requestAnimationFrame(step);
-      } else {
-        anim = null;
-        saveLocal();
+      if(t < 1) animRAF = requestAnimationFrame(step);
+      else { animRAF = null; saveLocal(); }
+    };
+
+    requestAnimationFrame(step);
+    renderHeader();
+  }
+
+  function playRuns(){
+    // Only meaningful in onball/defend, but allow always.
+    const baseTargets = getTargets(state.ui.mode);
+    const ms = Math.max(450, Math.floor(state.ui.animMs * 0.85));
+
+    // Run waypoint computed from run type.
+    const waypoint = {};
+    for(const p of PLAYERS){
+      const pos = baseTargets[p.id];
+      const run = state.player[p.id].run;
+      let dx=0, dy=0;
+
+      // Attack direction is left -> right, so "forward" is +x.
+      if(run==="diag"){ dx=60; dy=(p.id==="LS"? -25 : p.id==="RS"? 25 : 0); }
+      if(run==="wide"){
+        if(p.id==="LW"){ dx=55; dy=-30; }
+        else if(p.id==="RW"){ dx=55; dy=30; }
+        else { dx=35; dy=0; }
       }
+      if(run==="drop"){ dx=-40; dy=0; }
+
+      waypoint[p.id] = { x: pos.x + dx, y: pos.y + dy };
+    }
+
+    if(animRAF) cancelAnimationFrame(animRAF);
+
+    const from = structuredClone(state.render);
+    const mid = waypoint;
+    const to = baseTargets;
+
+    const t0 = performance.now();
+
+    const step = (now)=>{
+      const t = clamp((now - t0)/ms, 0, 1);
+      // 0→0.55 go to run waypoint, 0.55→1 return to target
+      const s = t < 0.55 ? (t/0.55) : ((t-0.55)/0.45);
+      const e = easeInOutCubic(s);
+
+      for(const p of PLAYERS){
+        const A = from[p.id];
+        const B = mid[p.id];
+        const C = to[p.id];
+
+        if(t < 0.55){
+          state.render[p.id] = { x: A.x + (B.x - A.x)*e, y: A.y + (B.y - A.y)*e };
+        } else {
+          // return from waypoint to final
+          state.render[p.id] = { x: B.x + (C.x - B.x)*e, y: B.y + (C.y - B.y)*e };
+        }
+      }
+
+      renderPitch();
+      if(t < 1) animRAF = requestAnimationFrame(step);
+      else { animRAF = null; saveLocal(); }
     };
 
     requestAnimationFrame(step);
   }
 
-  // ---------- Dragging ----------
+  // ---------------- Rendering ----------------
+  function renderHeader(){
+    const m = state.ui.mode;
+    modeChip.innerHTML = m==="base" ? "<b>Base</b>"
+      : m==="onball" ? "<b>On Ball</b>"
+      : "<b>Defensive</b>";
+  }
+
+  function renderPaths(){
+    pathsG.innerHTML = "";
+    if(!state.ui.showPaths) return;
+
+    // Show base -> target path for current mode
+    const targets = getTargets(state.ui.mode);
+    const NS = "http://www.w3.org/2000/svg";
+
+    for(const p of PLAYERS){
+      const b = state.base[p.id];
+      const t = targets[p.id];
+      const dist = Math.hypot(t.x-b.x, t.y-b.y);
+      if(dist < 8 || state.ui.mode==="base") continue;
+
+      const path = document.createElementNS(NS,"path");
+      path.setAttribute("class","path");
+      path.setAttribute("d", `M ${b.x} ${b.y} L ${t.x} ${t.y}`);
+      pathsG.appendChild(path);
+    }
+  }
+
+  function makeNode(p, x, y){
+    const NS = "http://www.w3.org/2000/svg";
+    const g = document.createElementNS(NS, "g");
+    g.setAttribute("class", `pnode${state.ui.selected===p.id ? " selected":""}`);
+    g.dataset.id = p.id;
+
+    const c = document.createElementNS(NS, "circle");
+    c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", 18);
+
+    const t = document.createElementNS(NS, "text");
+    t.setAttribute("x", x); t.setAttribute("y", y + 4); t.setAttribute("text-anchor", "middle");
+
+    const label = state.player[p.id]?.label ? ` (${state.player[p.id].label})` : "";
+    t.textContent = p.short + label;
+
+    g.appendChild(c); g.appendChild(t);
+    return g;
+  }
+
+  function renderPitch(){
+    renderPaths();
+    nodesG.innerHTML = "";
+    for(const p of PLAYERS){
+      const xy = state.render[p.id];
+      nodesG.appendChild(makeNode(p, xy.x, xy.y));
+    }
+    wireDrag();
+  }
+
+  // ---------------- Dragging ----------------
   let drag = null;
 
   function wireDrag(){
-    const svg = $("pitch");
-
-    svg.onpointerdown = (e)=>{
+    // Dragging ONLY edits BASE (stagnant). That’s the point.
+    pitch.onpointerdown = (e)=>{
       const g = e.target.closest?.("g.pnode");
-      if(!g || g.classList.contains("ghost")) return;
-
+      if(!g) return;
       const id = g.dataset.id;
+
       state.ui.selected = id;
-      renderPlayerEditor();
+      loadPlayerUI();
+      renderPitch();
 
-      const phase = state.ui.phase;
+      if(state.ui.mode !== "base"){
+        flash("Switch to Base to drag positions");
+        return;
+      }
 
-      drag = { id, phase, pointerId:e.pointerId };
+      drag = { id, pointerId:e.pointerId };
       g.setPointerCapture?.(e.pointerId);
-
       e.preventDefault();
-      renderNodes();
     };
 
-    svg.onpointermove = (e)=>{
+    pitch.onpointermove = (e)=>{
       if(!drag) return;
-      const phase = drag.phase;
-      const id = drag.id;
-
-      const pt = clientToSvg(svg, e.clientX, e.clientY);
+      const pt = clientToSvg(pitch, e.clientX, e.clientY);
       const x = clamp(pt.x, BOUNDS.minX, BOUNDS.maxX);
       const y = clamp(pt.y, BOUNDS.minY, BOUNDS.maxY);
 
-      // update BOTH target + render position (so dragging is immediate)
-      state.positions[phase][id] = {x,y};
-      state.renderPos[phase][id] = {x,y};
-
-      renderGhost();
-      renderArrows();
-      renderNodes();
+      state.base[drag.id] = {x,y};
+      state.render[drag.id] = {x,y};
+      renderPitch();
     };
 
     const end = ()=>{
@@ -572,82 +545,155 @@
       drag = null;
       saveLocal();
     };
-
-    svg.onpointerup = end;
-    svg.onpointercancel = end;
-    svg.onpointerleave = end;
+    pitch.onpointerup = end;
+    pitch.onpointercancel = end;
+    pitch.onpointerleave = end;
   }
 
-  // ---------- UI wiring ----------
-  phaseAttackBtn.onclick = ()=>{
-    const prev = state.ui.phase;
-    state.ui.phase="attack";
-    if(state.ui.autoAnimate && prev!=="attack") startPhaseAnimation("attack");
-    renderAll();
+  // ---------------- Player UI ----------------
+  const playerSelect = $("playerSelect");
+  const rolePreset = $("rolePreset");
+  const labelEl = $("label");
+  const obx = $("obx"), oby = $("oby"), dbx = $("dbx"), dby = $("dby");
+  const runType = $("runType");
+  const instr = $("instr");
+
+  // populate
+  for(const p of PLAYERS){
+    const opt = document.createElement("option");
+    opt.value = p.id; opt.textContent = p.id;
+    playerSelect.appendChild(opt);
+  }
+
+  function loadPlayerUI(){
+    playerSelect.value = state.ui.selected;
+    const p = state.player[state.ui.selected];
+    labelEl.value = p.label || "";
+    obx.value = p.on.dx; oby.value = p.on.dy;
+    dbx.value = p.def.dx; dby.value = p.def.dy;
+    runType.value = p.run || "none";
+    instr.value = p.instr || "";
+  }
+
+  function applyPresetToSelected(preset){
+    const id = state.ui.selected;
+    const p = state.player[id];
+
+    // Presets are just good defaults; you can still edit.
+    const set = (onDx,onDy, defDx,defDy, run="none", label="")=>{
+      p.on.dx=onDx; p.on.dy=onDy; p.def.dx=defDx; p.def.dy=defDy; p.run=run;
+      if(label) p.label=label;
+    };
+
+    if(preset==="wingback"){
+      // winger behaves like fullback: high/wide on-ball, drops on defend.
+      // LW is lower on pitch (y bigger), RW upper (y smaller).
+      const isLW = id==="LW";
+      set( +120, isLW ? -30 : +30,  -20, isLW ? -10 : +10, "wide", "WB");
+      p.instr = "On Ball: Join attack (overlap)\nDef: Drop back like fullback";
+    }
+    else if(preset==="anchor"){
+      set(+20, 0,  -10, 0, "none", "Anchor");
+      p.instr = "Stay back • Cover center • Cut passing lanes";
+    }
+    else if(preset==="shuttler"){
+      set(+70, 0,  +10, 0, "drop", "Shuttle");
+      p.instr = "Step up in build-up • Support box • Recover into midfield";
+    }
+    else if(preset==="cam"){
+      set(+90, 0,  +10, 0, "drop", "Creator");
+      p.instr = "Free roam • Receive between lines • Press after loss";
+    }
+    else if(preset==="strikerRun"){
+      set(+120, 0,  +40, 0, "diag", "Run");
+      p.instr = "Stay forward • Get in behind";
+    }
+    else if(preset==="strikerHold"){
+      set(+80, 0,  +40, 0, "drop", "Hold");
+      p.instr = "Come short • Hold up play • Bring others in";
+    }
+    else if(preset==="cb"){
+      set(+10, 0, 0, 0, "none", "CB");
+      p.instr = "Hold line • No adventurous runs";
+    }
+    else if(preset==="gk"){
+      set(0,0,0,0,"none","GK");
+      p.instr = "Sweeper if needed";
+    }
+
+    loadPlayerUI();
+    saveLocal();
+    renderPitch();
+    flash("Preset applied");
+  }
+
+  // ---------------- Controls ----------------
+  $("goBase").onclick = ()=>{
+    // snap render to base immediately
+    state.ui.mode="base";
+    state.render = structuredClone(state.base);
+    renderHeader(); renderPitch(); saveLocal();
   };
-  phaseDefendBtn.onclick = ()=>{
-    const prev = state.ui.phase;
-    state.ui.phase="defend";
-    if(state.ui.autoAnimate && prev!=="defend") startPhaseAnimation("defend");
-    renderAll();
+  $("goOnBall").onclick = ()=>{ animateTo("onball"); flash("On Ball movement"); };
+  $("goDef").onclick = ()=>{ animateTo("defend"); flash("Defensive movement"); };
+  $("playRun").onclick = ()=>{ playRuns(); flash("Runs played"); };
+
+  $("animMs").onchange = ()=>{ state.ui.animMs = +$("animMs").value; saveLocal(); };
+
+  $("pathsOn").onclick = ()=>{ state.ui.showPaths=true; $("pathsOn").classList.add("active"); $("pathsOff").classList.remove("active"); renderPitch(); saveLocal(); };
+  $("pathsOff").onclick = ()=>{ state.ui.showPaths=false; $("pathsOff").classList.add("active"); $("pathsOn").classList.remove("active"); renderPitch(); saveLocal(); };
+
+  $("reset").onclick = ()=>{
+    state.base = structuredClone(DEFAULT_BASE);
+    state.render = structuredClone(DEFAULT_BASE);
+    state.ui.mode="base";
+    renderHeader(); renderPitch(); saveLocal();
+    flash("Reset base");
   };
 
-  autoOnBtn.onclick = ()=>{ state.ui.autoAnimate=true; renderAll(); };
-  autoOffBtn.onclick = ()=>{ state.ui.autoAnimate=false; renderAll(); };
-
-  ghostBtn.onclick = ()=>{ state.ui.showGhost = !state.ui.showGhost; renderAll(); };
-  arrowsBtn.onclick = ()=>{ state.ui.showArrows = !state.ui.showArrows; renderAll(); };
-
-  animMsSel.onchange = ()=>{ state.ui.animMs = +animMsSel.value; saveLocal(); };
-
-  $("toAttack").onclick = ()=>{
-    state.ui.phase="attack";
-    startPhaseAnimation("attack");
-    renderAll();
-  };
-  $("toDefend").onclick = ()=>{
-    state.ui.phase="defend";
-    startPhaseAnimation("defend");
-    renderAll();
-  };
-
-  $("resetDefault").onclick = ()=>{
-    state.positions.attack = structuredClone(DEFAULT_ATTACK);
-    state.positions.defend = structuredClone(DEFAULT_DEFEND);
-    state.renderPos.attack = structuredClone(DEFAULT_ATTACK);
-    state.renderPos.defend = structuredClone(DEFAULT_DEFEND);
-    flash("Reset");
-    renderAll();
-  };
-
-  $("swapPhases").onclick = ()=>{
-    const tmpT = state.positions.attack; state.positions.attack = state.positions.defend; state.positions.defend = tmpT;
-    const tmpR = state.renderPos.attack; state.renderPos.attack = state.renderPos.defend; state.renderPos.defend = tmpR;
-    flash("Swapped");
-    renderAll();
+  $("swapOBDB").onclick = ()=>{
+    for(const p of PLAYERS){
+      const m = state.player[p.id];
+      const tmp = {dx:m.on.dx, dy:m.on.dy};
+      m.on.dx = m.def.dx; m.on.dy = m.def.dy;
+      m.def.dx = tmp.dx; m.def.dy = tmp.dy;
+    }
+    loadPlayerUI();
+    saveLocal();
+    flash("Swapped offsets");
   };
 
   $("exportBtn").onclick = exportJSON;
   $("importBtn").onclick = importJSON;
 
-  playerSelect.onchange = ()=>{ state.ui.selected = playerSelect.value; renderAll(); };
-
-  $("applyPlayer").onclick = ()=>{
-    const id = state.ui.selected;
-    state.players[id].label = playerLabel.value.trim();
-    state.players[id].instrAttack = instrAttackTa.value.split("\n").map(s=>s.trim()).filter(Boolean);
-    state.players[id].instrDefend = instrDefendTa.value.split("\n").map(s=>s.trim()).filter(Boolean);
-    flash("Saved");
-    renderAll();
+  playerSelect.onchange = ()=>{
+    state.ui.selected = playerSelect.value;
+    loadPlayerUI();
+    renderPitch();
   };
 
-  $("clearPlayer").onclick = ()=>{
+  rolePreset.onchange = ()=> applyPresetToSelected(rolePreset.value);
+
+  $("apply").onclick = ()=>{
     const id = state.ui.selected;
-    state.players[id].label = "";
-    state.players[id].instrAttack = [];
-    state.players[id].instrDefend = [];
+    const p = state.player[id];
+    p.label = labelEl.value.trim();
+    p.on.dx = +obx.value || 0; p.on.dy = +oby.value || 0;
+    p.def.dx = +dbx.value || 0; p.def.dy = +dby.value || 0;
+    p.run = runType.value;
+    p.instr = instr.value;
+    saveLocal();
+    renderPitch();
+    flash("Player saved");
+  };
+
+  $("clear").onclick = ()=>{
+    const id = state.ui.selected;
+    state.player[id] = {label:"", instr:"", on:{dx:0,dy:0}, def:{dx:0,dy:0}, run:"none"};
+    loadPlayerUI();
+    saveLocal();
+    renderPitch();
     flash("Cleared");
-    renderAll();
   };
 
   window.addEventListener("keydown",(e)=>{
@@ -657,16 +703,23 @@
     }
   });
 
-  // ---------- Init ----------
+  // ---------------- Init ----------------
   (function init(){
-    const loaded = loadLocal();
-    if(!loaded){
-      // ensure renderPos starts at defaults
-      state.renderPos.attack = structuredClone(state.positions.attack);
-      state.renderPos.defend = structuredClone(state.positions.defend);
+    loadLocal();
+    // ensure render matches base at start
+    if(state.ui.mode==="base") state.render = structuredClone(state.base);
+    renderHeader();
+    loadPlayerUI();
+
+    // set buttons initial
+    if(state.ui.showPaths){
+      $("pathsOn").classList.add("active"); $("pathsOff").classList.remove("active");
+    }else{
+      $("pathsOff").classList.add("active"); $("pathsOn").classList.remove("active");
     }
-    renderAll();
-    flash(loaded ? "Loaded saved board" : "Ready");
+
+    renderPitch();
+    flash("Ready");
   })();
 </script>
 </body>
